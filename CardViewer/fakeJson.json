@@ -1,0 +1,50 @@
+[
+	{
+		"count": 21,
+		"name": "Competitor"
+	},
+	{
+		"count": 35,
+		"name": "Consultant"
+	},
+	{
+		"count": 67,
+		"name": "Customer"
+	},
+	{
+		"count": 52,
+		"name": "Investor"
+	},
+	{
+		"count": 10,
+		"name": "Partner"
+	},
+	{
+		"count": 32,
+		"name": "Influencer"
+	},
+	{
+		"count": 5,
+		"name": "Press"
+	},
+	{
+		"count": 45,
+		"name": "Prospect"
+	},
+	{
+		"count": 16,
+		"name": "Reseller"
+	},
+	{
+		"count": 63,
+		"name": "Supplier"
+	},
+	{
+		"count": 12,
+		"name": "Vendor"
+	},
+	{
+		"count": 19,
+		"name": "Other"
+	}
+]
