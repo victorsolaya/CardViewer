@@ -66,7 +66,7 @@ export class CardViewer implements ComponentFramework.StandardControl<IInputs, I
 
   private async retrieveRecords(context: ComponentFramework.Context<IInputs>, entityName: string, options: string) {
     let hasNextLink = false;
-    const results = await context.webAPI.retrieveMultipleRecords(entityName, options, 10);
+    const results = await context.webAPI.retrieveMultipleRecords(entityName, options, 5000);
     let substringUrl = "";
     if (results.nextLink) {
       const questionMarkIndex = results.nextLink.indexOf("?");
