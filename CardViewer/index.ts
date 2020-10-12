@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import * as mockData from "./fakeJson.json";
 import CardView from "./Card";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -47,10 +46,9 @@ export class CardViewer implements ComponentFramework.StandardControl<IInputs, I
     context: ComponentFramework.Context<IInputs>,
     entityName: string,
     field: string,
-    isFake: boolean,
   ): Promise<void> {
     this._container.innerHTML = "";
-    const objectCountAndName: [MetadataObject] = await this.getJsonObjectUtils(context, entityName, field, isFake);
+    const objectCountAndName: [MetadataObject] = await this.getJsonObjectUtils(context, entityName, field);
     ReactDOM.render(React.createElement(CardView, objectCountAndName), this._container);
   }
 
@@ -61,7 +59,7 @@ export class CardViewer implements ComponentFramework.StandardControl<IInputs, I
       fieldName = entityRecord._columnAliasNameMap.optionSetField;
     }
 
-    this.runMain(context, context.parameters.dataset.getTargetEntityType(), fieldName, false);
+    this.runMain(context, context.parameters.dataset.getTargetEntityType(), fieldName);
   }
 
   private async retrieveRecords(context: ComponentFramework.Context<IInputs>, entityName: string, options: string) {
@@ -102,13 +100,9 @@ export class CardViewer implements ComponentFramework.StandardControl<IInputs, I
     context: ComponentFramework.Context<IInputs>,
     entityName: string,
     field: string,
-    isFake: boolean,
   ): Promise<[MetadataObject]> => {
-    let objectCountAndName: [MetadataObject] = [{}] as [MetadataObject];
-    if (isFake) {
-      objectCountAndName = mockData as [MetadataObject];
-      return objectCountAndName;
-    }
+    const objectCountAndName: [MetadataObject] = [{}] as [MetadataObject];
+
     const metadata = await context.utils.getEntityMetadata(entityName, [field]);
     const values: any = Object.values(metadata.Attributes.get(field).OptionSet);
     let fetchXmlFromView = await context.webAPI.retrieveRecord("savedquery", context.parameters.dataset.getViewId());
