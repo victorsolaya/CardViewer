@@ -80,6 +80,23 @@ export class CardViewer implements ComponentFramework.StandardControl<IInputs, I
     };
     return response;
   }
+  private splice(stringOriginal: string, index: number, stringToAdd: string) {
+    return stringOriginal.slice(0, index) + stringToAdd + stringOriginal.slice(index);
+  }
+  private mapFetchXml(fetchXml: string, field: string, value: number) {
+    const condition = `<condition attribute="${field}" operator="eq" value="${value}" />`;
+    const filter = `<filter type="and">${condition}</filter>`;
+    let indexOfFilter = 0;
+
+    if (fetchXml.includes("</filter>")) {
+      indexOfFilter = fetchXml.indexOf("</filter>");
+      fetchXml = this.splice(fetchXml, indexOfFilter, condition);
+    } else {
+      indexOfFilter = fetchXml.indexOf("</entity>");
+      fetchXml = this.splice(fetchXml, indexOfFilter, filter);
+    }
+    return fetchXml;
+  }
 
   getJsonObjectUtils = async (
     context: ComponentFramework.Context<IInputs>,
@@ -87,17 +104,26 @@ export class CardViewer implements ComponentFramework.StandardControl<IInputs, I
     field: string,
     isFake: boolean,
   ): Promise<[MetadataObject]> => {
-    const objectCountAndName: [MetadataObject] = [{}] as [MetadataObject];
+    let objectCountAndName: [MetadataObject] = [{}] as [MetadataObject];
     if (isFake) {
+      objectCountAndName = mockData as [MetadataObject];
       return objectCountAndName;
     }
     const metadata = await context.utils.getEntityMetadata(entityName, [field]);
     const values: any = Object.values(metadata.Attributes.get(field).OptionSet);
+    let fetchXmlFromView = await context.webAPI.retrieveRecord("savedquery", context.parameters.dataset.getViewId());
+    if (fetchXmlFromView == null) {
+      fetchXmlFromView = await context.webAPI.retrieveRecord("userquery", context.parameters.dataset.getViewId());
+    }
+
     for (const objectValue of values) {
+      let fetchXml = fetchXmlFromView.fetchxml;
+      fetchXml = this.mapFetchXml(fetchXml, field, objectValue.value);
+
       let response: ResponseRetrieveRecords = await this.retrieveRecords(
         context,
         entityName,
-        `?$filter=${field} eq ${objectValue.value}`,
+        `?fetchXml=${encodeURI(fetchXml)}`,
       );
       let count = response.count;
       while (response.hasNextLink) {
