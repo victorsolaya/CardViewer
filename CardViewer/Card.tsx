@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { Card } from "@uifabric/react-cards";
-import { Stack, IStackTokens, Text } from "office-ui-fabric-react";
+import { Stack, IStackTokens, Text, FontWeights, ITextStyles } from "@fluentui/react";
 import { MetadataObject } from "./Utilities/CardViewer.types";
 
 function CardItem(props: MetadataObject) {
   return (
     <Card aria-label="Option">
-      <Card.Item>
+      <Card.Item styles={descriptionTextStyles}>
         <Text variant="xxLarge">{props.name}</Text>
       </Card.Item>
-      <Card.Item>
+      <Card.Item styles={countTextStyles}>
         <Text variant="mega">{props.count}</Text>
       </Card.Item>
     </Card>
   );
 }
-function CardViewer(props: [MetadataObject]): any {
+function CardView(props: [MetadataObject]): any {
   // export class CardVerticalExample extends React.Component {
   // public render(): JSX.Element {
   const objectJson = Object.values(props);
@@ -34,4 +34,19 @@ function CardViewer(props: [MetadataObject]): any {
   // }
 }
 
-export default CardViewer;
+const descriptionTextStyles: ITextStyles = {
+  root: {
+    padding: "10px",
+    fontWeight: FontWeights.bold,
+    textAlign: "center",
+  },
+};
+
+const countTextStyles: ITextStyles = {
+  root: {
+    padding: "10px",
+    fontWeight: FontWeights.regular,
+    textAlign: "center",
+  },
+};
+export default CardView;

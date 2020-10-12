@@ -1,12 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import * as mockData from "./fakeJson.json";
-import CardViewer from "./Card";
+import CardView from "./Card";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { MetadataObject } from "./Utilities/CardViewer.types";
 
-export class CardViewerMain implements ComponentFramework.StandardControl<IInputs, IOutputs> {
+interface DatasetApiEntityRecord extends ComponentFramework.PropertyHelper.DataSetApi.EntityRecord {
+  _columnAliasNameMap: OptionSetColumnMap;
+}
+
+interface OptionSetColumnMap {
+  optionSetField: string;
+}
+
+interface ResponseRetrieveRecords {
+  count: number;
+  options: string;
+  hasNextLink: boolean;
+}
+
+export class CardViewer implements ComponentFramework.StandardControl<IInputs, IOutputs> {
   private _container: HTMLDivElement;
   private _optionValues: number[];
   notifyOutputChanged: () => void;
@@ -27,8 +41,6 @@ export class CardViewerMain implements ComponentFramework.StandardControl<IInput
     container: HTMLDivElement,
   ) {
     this._container = container;
-    this.notifyOutputChanged = notifyOutputChanged;
-    this.runMain(context, context.parameters.dataset.getTargetEntityType(), "customertypecode", false);
   }
 
   private async runMain(
@@ -39,7 +51,34 @@ export class CardViewerMain implements ComponentFramework.StandardControl<IInput
   ): Promise<void> {
     this._container.innerHTML = "";
     const objectCountAndName: [MetadataObject] = await this.getJsonObjectUtils(context, entityName, field, isFake);
-    ReactDOM.render(React.createElement(CardViewer, objectCountAndName), this._container);
+    ReactDOM.render(React.createElement(CardView, objectCountAndName), this._container);
+  }
+
+  private initializeComponent(context: ComponentFramework.Context<IInputs>) {
+    let fieldName = "statuscode";
+    if (Object.values(context.parameters.dataset.records).length > 0) {
+      const entityRecord = Object.values(context.parameters.dataset.records)[0] as DatasetApiEntityRecord;
+      fieldName = entityRecord._columnAliasNameMap.optionSetField;
+    }
+
+    this.runMain(context, context.parameters.dataset.getTargetEntityType(), fieldName, false);
+  }
+
+  private async retrieveRecords(context: ComponentFramework.Context<IInputs>, entityName: string, options: string) {
+    let hasNextLink = false;
+    const results = await context.webAPI.retrieveMultipleRecords(entityName, options, 10);
+    let substringUrl = "";
+    if (results.nextLink) {
+      const questionMarkIndex = results.nextLink.indexOf("?");
+      substringUrl = results.nextLink.substring(questionMarkIndex);
+      hasNextLink = true;
+    }
+    const response: ResponseRetrieveRecords = {
+      count: results.entities.length,
+      hasNextLink: hasNextLink,
+      options: substringUrl,
+    };
+    return response;
   }
 
   getJsonObjectUtils = async (
@@ -48,18 +87,24 @@ export class CardViewerMain implements ComponentFramework.StandardControl<IInput
     field: string,
     isFake: boolean,
   ): Promise<[MetadataObject]> => {
-    const objectCountAndName: [MetadataObject] = mockData as [MetadataObject];
+    const objectCountAndName: [MetadataObject] = [{}] as [MetadataObject];
     if (isFake) {
       return objectCountAndName;
     }
     const metadata = await context.utils.getEntityMetadata(entityName, [field]);
     const values: any = Object.values(metadata.Attributes.get(field).OptionSet);
     for (const objectValue of values) {
-      const records: any = await context.webAPI.retrieveMultipleRecords(
+      let response: ResponseRetrieveRecords = await this.retrieveRecords(
+        context,
         entityName,
         `?$filter=${field} eq ${objectValue.value}`,
       );
-      const count = records.entities.length;
+      let count = response.count;
+      while (response.hasNextLink) {
+        response = await this.retrieveRecords(context, entityName, response.options);
+        count = count + response.count;
+      }
+
       const countandname = { count: count, name: objectValue.text };
       objectCountAndName.push(countandname);
     }
@@ -70,8 +115,8 @@ export class CardViewerMain implements ComponentFramework.StandardControl<IInput
    * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
    * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
    */
-  public updateView(): void {
-    return;
+  public updateView(context: ComponentFramework.Context<IInputs>): void {
+    this.initializeComponent(context);
   }
 
   /**
