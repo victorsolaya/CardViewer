@@ -2,9 +2,7 @@
 
 ## Description
 
-This control has been created to select many records from an entity.
-What this will do is to insert the data split by the delimiter you have selected in your control in the single text field this is attached.
-This can be useful to retrieve a "list of records" from a single field and it can be used in a plugin.
+This control will display as cards the amount of records and its label based on the options from an optionset you have selected in the configuration.
 
 ## Download
 
