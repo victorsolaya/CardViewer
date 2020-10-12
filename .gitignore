@@ -12,4 +12,4 @@
 # msbuild output directories
 /bin
 /obj
-/CardViewer_Solution
+/CardViewer_PCF
